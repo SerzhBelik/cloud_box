@@ -6,10 +6,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
-import ru.geekbrains.belikov.cloud.common.AbstractMessage;
-import ru.geekbrains.belikov.cloud.common.FileMessage;
-import ru.geekbrains.belikov.cloud.common.FileRequest;
-import ru.geekbrains.belikov.cloud.common.RefreshCommand;
+import ru.geekbrains.belikov.cloud.common.*;
 
 import java.io.IOException;
 import java.net.URL;
@@ -31,19 +28,22 @@ public class Controller implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         Network.start();
-        Network.sendMsg(new RefreshCommand());
+        Network.sendMsg(new Refresh());
         Thread t = new Thread(() -> {
             try {
                 while (true) {
-                    AbstractMessage am = Network.readObject();
-                    if (am instanceof FileMessage) {
-                        FileMessage fm = (FileMessage) am;
-                        Files.write(Paths.get("client_storage/" + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
-                        refreshLocalFilesList();
-//                        обратная передача файлов
-                        System.out.println("отправка на сервер");
-                        Network.sendMsg(new FileMessage(Paths.get("client_storage/2.txt")));
+                    Object om = Network.readObject();
+                    if (om instanceof AbstractMessage){
+                        AbstractMessage am = (AbstractMessage) om;
+                        selectMessage(am);
                     }
+
+
+                    if (om instanceof CommandMessage){
+                        CommandMessage cm = (CommandMessage) om;
+                        executeCommand(cm);
+                    }
+
                 }
             } catch (ClassNotFoundException | IOException e) {
                 e.printStackTrace();
@@ -54,6 +54,43 @@ public class Controller implements Initializable {
         t.setDaemon(true);
         t.start();
         refreshLocalFilesList();
+    }
+
+    private void selectMessage(AbstractMessage am) throws IOException{
+        if (am instanceof FileMessage) {
+            saveMessage(am);
+        }
+
+        if (am instanceof FileList){
+            FileList fileList = (FileList) am;
+            refreshServerFilesList(fileList);
+        }
+    }
+
+    private void refreshServerFilesList(FileList fileList) {
+        System.out.println(fileList.getFileList());
+        if (Platform.isFxApplicationThread()) {
+                serverFileList.getItems().clear();
+                fileList.getFileList().forEach(o -> serverFileList.getItems().add(o));
+        } else {
+            Platform.runLater(() -> {
+                    serverFileList.getItems().clear();
+                    fileList.getFileList().forEach(o -> serverFileList.getItems().add(o));
+            });
+        }
+    }
+
+    private void executeCommand(CommandMessage cm) {
+
+    }
+
+    private void saveMessage(AbstractMessage am) throws IOException{
+        FileMessage fm = (FileMessage) am;
+        Files.write(Paths.get("client_storage/" + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
+        refreshLocalFilesList();
+//                        обратная передача файлов
+        System.out.println("отправка на сервер");
+        Network.sendMsg(new FileMessage(Paths.get("client_storage/2.txt")));
     }
 
     public void pressOnDownloadBtn(ActionEvent actionEvent) {
