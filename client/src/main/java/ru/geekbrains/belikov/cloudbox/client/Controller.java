@@ -1,4 +1,4 @@
-package ru.geekbrains.belikov.cloud.common.box.client;
+package ru.geekbrains.belikov.cloudbox.client;
 
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -22,7 +22,7 @@ public class Controller implements Initializable {
     TextField tfFileName;
 
     @FXML
-    ListView<String> filesList;
+    ListView<String> customCellListView;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -61,20 +61,27 @@ public class Controller implements Initializable {
     public void refreshLocalFilesList() {
         if (Platform.isFxApplicationThread()) {
             try {
-                filesList.getItems().clear();
-                Files.list(Paths.get("client_storage")).map(p -> p.getFileName().toString()).forEach(o -> filesList.getItems().add(o));
+                customCellListView.getItems().clear();
+                Files.list(Paths.get("client_storage")).map(p -> p.getFileName().toString()).forEach(o -> customCellListView.getItems().add(o));
             } catch (IOException e) {
                 e.printStackTrace();
             }
         } else {
             Platform.runLater(() -> {
                 try {
-                    filesList.getItems().clear();
-                    Files.list(Paths.get("client_storage")).map(p -> p.getFileName().toString()).forEach(o -> filesList.getItems().add(o));
+                    customCellListView.getItems().clear();
+                    Files.list(Paths.get("client_storage")).map(p -> p.getFileName().toString()).forEach(o -> customCellListView.getItems().add(o));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             });
         }
+    }
+
+    public void btnShowAlert(ActionEvent actionEvent) {
+
+    }
+    public void btnExit(ActionEvent actionEvent) {
+
     }
 }

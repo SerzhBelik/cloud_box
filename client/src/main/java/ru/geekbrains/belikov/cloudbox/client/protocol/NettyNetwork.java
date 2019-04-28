@@ -1,4 +1,4 @@
-package ru.geekbrains.belikov.cloud.common.box.client.protocol;
+package ru.geekbrains.belikov.cloudbox.client.protocol;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;

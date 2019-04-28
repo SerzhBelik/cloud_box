@@ -1,4 +1,4 @@
-package ru.geekbrains.belikov.cloud.common.box.client;
+package ru.geekbrains.belikov.cloudbox.client;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;

@@ -1,4 +1,4 @@
-package ru.geekbrains.belikov.cloud.common.box.client;
+package ru.geekbrains.belikov.cloudbox.client;
 
 import io.netty.handler.codec.serialization.ObjectDecoderInputStream;
 import io.netty.handler.codec.serialization.ObjectEncoderOutputStream;
