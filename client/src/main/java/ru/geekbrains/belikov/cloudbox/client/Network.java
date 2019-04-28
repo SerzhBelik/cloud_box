@@ -3,6 +3,7 @@ package ru.geekbrains.belikov.cloudbox.client;
 import io.netty.handler.codec.serialization.ObjectDecoderInputStream;
 import io.netty.handler.codec.serialization.ObjectEncoderOutputStream;
 import ru.geekbrains.belikov.cloud.common.AbstractMessage;
+import ru.geekbrains.belikov.cloud.common.CommandMessage;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -41,6 +42,17 @@ public class Network {
     }
 
     public static boolean sendMsg(AbstractMessage msg) {
+        try {
+            out.writeObject(msg);
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+
+    public static boolean sendMsg(CommandMessage msg) {
         try {
             out.writeObject(msg);
             return true;

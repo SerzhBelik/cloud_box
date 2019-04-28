@@ -9,6 +9,7 @@ import javafx.scene.control.TextField;
 import ru.geekbrains.belikov.cloud.common.AbstractMessage;
 import ru.geekbrains.belikov.cloud.common.FileMessage;
 import ru.geekbrains.belikov.cloud.common.FileRequest;
+import ru.geekbrains.belikov.cloud.common.RefreshCommand;
 
 import java.io.IOException;
 import java.net.URL;
@@ -22,11 +23,15 @@ public class Controller implements Initializable {
     TextField tfFileName;
 
     @FXML
-    ListView<String> customCellListView;
+    ListView<String> localFileList;
+
+    @FXML
+    ListView<String> serverFileList;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         Network.start();
+        Network.sendMsg(new RefreshCommand());
         Thread t = new Thread(() -> {
             try {
                 while (true) {
@@ -61,16 +66,16 @@ public class Controller implements Initializable {
     public void refreshLocalFilesList() {
         if (Platform.isFxApplicationThread()) {
             try {
-                customCellListView.getItems().clear();
-                Files.list(Paths.get("client_storage")).map(p -> p.getFileName().toString()).forEach(o -> customCellListView.getItems().add(o));
+                localFileList.getItems().clear();
+                Files.list(Paths.get("client_storage")).map(p -> p.getFileName().toString()).forEach(o -> localFileList.getItems().add(o));
             } catch (IOException e) {
                 e.printStackTrace();
             }
         } else {
             Platform.runLater(() -> {
                 try {
-                    customCellListView.getItems().clear();
-                    Files.list(Paths.get("client_storage")).map(p -> p.getFileName().toString()).forEach(o -> customCellListView.getItems().add(o));
+                    localFileList.getItems().clear();
+                    Files.list(Paths.get("client_storage")).map(p -> p.getFileName().toString()).forEach(o -> localFileList.getItems().add(o));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
