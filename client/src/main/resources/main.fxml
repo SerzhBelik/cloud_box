@@ -27,7 +27,7 @@
             <Font name="Arial Bold" size="16.0" />
          </font>
       </Label>
-      <Button id="send_btn" layoutX="1.0" layoutY="374.0" onAction="#btnShowAlert" prefHeight="25.0" prefWidth="98.0" text="Send" />
+      <Button id="send_btn" layoutX="1.0" layoutY="374.0" onAction="#btnSend" prefHeight="25.0" prefWidth="98.0" text="Send" />
       <Button id="del_clnt_btn" layoutX="101.0" layoutY="374.0" onAction="#btnShowAlert" prefHeight="25.0" prefWidth="98.0" text="Delete" />
       <Button id="update_clnt_btn" layoutX="201.0" layoutY="374.0" onAction="#btnShowAlert" prefHeight="25.0" prefWidth="98.0" text="Update" />
       <Button id="download_btn" layoutX="302.0" layoutY="374.0" onAction="#btnShowAlert" prefHeight="25.0" prefWidth="98.0" text="Download" />

@@ -1,10 +1,13 @@
 package ru.geekbrains.belikov.cloudbox.client;
 
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
+import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.TextField;
 import ru.geekbrains.belikov.cloud.common.*;
 
@@ -24,6 +27,9 @@ public class Controller implements Initializable {
 
     @FXML
     ListView<String> serverFileList;
+
+    @FXML
+    Button close_btn;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -123,7 +129,19 @@ public class Controller implements Initializable {
     public void btnShowAlert(ActionEvent actionEvent) {
 
     }
-    public void btnExit(ActionEvent actionEvent) {
 
+    public void btnSend(ActionEvent actionEvent) throws IOException{
+
+        MultipleSelectionModel<String> msm= localFileList.getSelectionModel();
+        ObservableList<String> selected = msm.getSelectedItems();
+        for (String item : selected) {
+            Network.sendMsg(new FileMessage(Paths.get("client_storage/" + item)));
+        }
+        Network.sendMsg(new Refresh());
+    }
+
+
+    public void btnExit(ActionEvent actionEvent) {
+        System.exit(0);
     }
 }
