@@ -95,8 +95,8 @@ public class Controller implements Initializable {
         Files.write(Paths.get("client_storage/" + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
         refreshLocalFilesList();
 //                        обратная передача файлов
-        System.out.println("отправка на сервер");
-        Network.sendMsg(new FileMessage(Paths.get("client_storage/2.txt")));
+//        System.out.println("отправка на сервер");
+//        Network.sendMsg(new FileMessage(Paths.get("client_storage/2.txt")));
     }
 
     public void pressOnDownloadBtn(ActionEvent actionEvent) {
@@ -126,9 +126,26 @@ public class Controller implements Initializable {
         }
     }
 
-    public void btnShowAlert(ActionEvent actionEvent) {
-
+    public void btnClntDelete(ActionEvent actionEvent) throws IOException{
+        MultipleSelectionModel<String> msm= localFileList.getSelectionModel();
+        ObservableList<String> selected = msm.getSelectedItems();
+        for (String item : selected) {
+            Files.delete(Paths.get("client_storage/" + item));
+//            Network.sendMsg(new Delete(Paths.get("client_storage/" + item)));
+        }
+        refreshLocalFilesList();
     }
+
+
+    public void btnServDelete(ActionEvent actionEvent) throws IOException{
+        MultipleSelectionModel<String> msm= localFileList.getSelectionModel();
+        ObservableList<String> selected = msm.getSelectedItems();
+        for (String item : selected) {
+            Network.sendMsg(new Delete(Paths.get("server_storage/" + item)));
+        }
+        Network.sendMsg(new Refresh());
+    }
+
 
     public void btnSend(ActionEvent actionEvent) throws IOException{
 
@@ -142,6 +159,14 @@ public class Controller implements Initializable {
 
 
     public void btnExit(ActionEvent actionEvent) {
+        System.exit(0);
+    }
+
+    public void btnDownload(ActionEvent actionEvent) {
+        System.exit(0);
+    }
+
+    public void btnUpdate(ActionEvent actionEvent) {
         System.exit(0);
     }
 }
