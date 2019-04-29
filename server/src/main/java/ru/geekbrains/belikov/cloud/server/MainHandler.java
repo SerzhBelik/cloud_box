@@ -7,6 +7,7 @@ import io.netty.util.ReferenceCountUtil;
 import ru.geekbrains.belikov.cloud.common.*;
 
 
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -22,7 +23,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                 return;
             }
             if (msg instanceof CommandMessage){
-                CommandMessage cm = (Refresh) msg;
+                CommandMessage cm = (CommandMessage) msg;
                 executeCommand(cm, ctx);
             }
             if (msg instanceof FileRequest) {
@@ -47,8 +48,19 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
     private void executeCommand(CommandMessage msg, ChannelHandlerContext ctx) {
         System.out.println("Execute");
         if (msg instanceof Refresh) {
-            System.out.println(formFileList());
             ctx.writeAndFlush(new FileList(formFileList()));
+            return;
+        }
+
+        if (msg instanceof Delete) {
+            Delete delete = (Delete) msg;
+            try {
+                Files.delete(Paths.get("server_storage/" + delete.getFileName()));
+                System.out.println(delete.getFileName());
+                ctx.writeAndFlush(new FileList(formFileList()));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
     }

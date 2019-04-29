@@ -8,4 +8,8 @@ public class Delete extends CommandMessage {
     public Delete(Path path){
         this.fileName = path.getFileName().toString();
     }
+
+    public String getFileName() {
+        return fileName;
+    }
 }

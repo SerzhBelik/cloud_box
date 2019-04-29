@@ -8,7 +8,6 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MultipleSelectionModel;
-import javafx.scene.control.TextField;
 import ru.geekbrains.belikov.cloud.common.*;
 
 import java.io.IOException;
@@ -19,8 +18,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.ResourceBundle;
 
 public class Controller implements Initializable {
-    @FXML
-    TextField tfFileName;
 
     @FXML
     ListView<String> localFileList;
@@ -30,6 +27,15 @@ public class Controller implements Initializable {
 
     @FXML
     Button close_btn;
+
+    @FXML
+    Button del_serv_btn;
+
+    @FXML
+    Button update_serv_btn;
+
+    @FXML
+    Button update_clnt_btn;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -43,13 +49,10 @@ public class Controller implements Initializable {
                         AbstractMessage am = (AbstractMessage) om;
                         selectMessage(am);
                     }
-
-
                     if (om instanceof CommandMessage){
                         CommandMessage cm = (CommandMessage) om;
                         executeCommand(cm);
                     }
-
                 }
             } catch (ClassNotFoundException | IOException e) {
                 e.printStackTrace();
@@ -87,23 +90,13 @@ public class Controller implements Initializable {
     }
 
     private void executeCommand(CommandMessage cm) {
-
+        //FIXME
     }
 
     private void saveMessage(AbstractMessage am) throws IOException{
         FileMessage fm = (FileMessage) am;
         Files.write(Paths.get("client_storage/" + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
         refreshLocalFilesList();
-//                        обратная передача файлов
-//        System.out.println("отправка на сервер");
-//        Network.sendMsg(new FileMessage(Paths.get("client_storage/2.txt")));
-    }
-
-    public void pressOnDownloadBtn(ActionEvent actionEvent) {
-        if (tfFileName.getLength() > 0) {
-            Network.sendMsg(new FileRequest(tfFileName.getText()));
-            tfFileName.clear();
-        }
     }
 
     public void refreshLocalFilesList() {
@@ -131,17 +124,17 @@ public class Controller implements Initializable {
         ObservableList<String> selected = msm.getSelectedItems();
         for (String item : selected) {
             Files.delete(Paths.get("client_storage/" + item));
-//            Network.sendMsg(new Delete(Paths.get("client_storage/" + item)));
         }
         refreshLocalFilesList();
     }
 
 
-    public void btnServDelete(ActionEvent actionEvent) throws IOException{
-        MultipleSelectionModel<String> msm= localFileList.getSelectionModel();
+    public void btnServDelete(ActionEvent actionEvent) {
+        MultipleSelectionModel<String> msm= serverFileList.getSelectionModel();
         ObservableList<String> selected = msm.getSelectedItems();
         for (String item : selected) {
-            Network.sendMsg(new Delete(Paths.get("server_storage/" + item)));
+            System.out.println(item);
+            Network.sendMsg(new Delete(Paths.get(item)));
         }
         Network.sendMsg(new Refresh());
     }
@@ -163,10 +156,18 @@ public class Controller implements Initializable {
     }
 
     public void btnDownload(ActionEvent actionEvent) {
-        System.exit(0);
+        MultipleSelectionModel<String> msm= serverFileList.getSelectionModel();
+        ObservableList<String> selected = msm.getSelectedItems();
+        for (String item : selected) {
+            Network.sendMsg(new FileRequest(item));
+        }
+
     }
 
     public void btnUpdate(ActionEvent actionEvent) {
-        System.exit(0);
+
+        refreshLocalFilesList();
+        Network.sendMsg(new Refresh());
+
     }
 }
