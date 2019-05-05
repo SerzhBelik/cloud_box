@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class MainHandler extends ChannelInboundHandlerAdapter {
+
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         try {

@@ -9,7 +9,7 @@ import javafx.stage.Stage;
 public class Client extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception{
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/main.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/Login.fxml"));
         Parent root = fxmlLoader.load();
         primaryStage.setTitle("Box Client");
         Scene scene = new Scene(root);
