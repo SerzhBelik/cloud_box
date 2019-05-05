@@ -25,8 +25,10 @@ public class Server {
                 return;
             }
            if (msg instanceof Auth){
-               ((Auth) msg).setAuth(true); //FIXME
-               isAuth = true;
+               Auth auth = (Auth) msg;
+
+               auth.setAuth(AuthService.checkUser(auth.getLogin(), auth.getPassword())); //FIXME
+               isAuth = auth.isAuth();
                ctx.writeAndFlush(msg);
 //               System.out.println("!!!!!");
 //               ctx.pipeline().addLast(new MainHandler());
@@ -48,8 +50,8 @@ public class Server {
                             socketChannel.pipeline().addLast(
                                     new ObjectDecoder(50 * 1024 * 1024, ClassResolvers.cacheDisabled(null)),
                                     new ObjectEncoder(),
-                                    new AuthHandler(),
-                                    new MainHandler()
+                                    new AuthHandler()
+                                    ,new MainHandler()
                             );
                         }
                     })
