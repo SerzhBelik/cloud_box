@@ -1,14 +1,11 @@
 package ru.geekbrains.belikov.cloud.server;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class AuthService {
 
     public static boolean checkUser(String login, String password) {
-        return login.equals("login") && password.equals("pass"); // FIXME
+        return (login.equals("user1") && password.equals("pass1"))||
+                (login.equals("user2") && password.equals("pass2")); // FIXME
 
     }
 }

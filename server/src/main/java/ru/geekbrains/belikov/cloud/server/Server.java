@@ -16,25 +16,21 @@ public class Server {
         private static boolean isAuth = false;
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-//            if (msg != null){
-//                System.out.println("not null");
-//            }
 
             if (isAuth){
                 ctx.fireChannelRead(msg);
                 return;
             }
+
            if (msg instanceof Auth){
                Auth auth = (Auth) msg;
 
-               auth.setAuth(AuthService.checkUser(auth.getLogin(), auth.getPassword())); //FIXME
+               auth.setAuth(AuthService.checkUser(auth.getLogin(), auth.getPassword()));
                isAuth = auth.isAuth();
+               ctx.fireChannelRead(msg);
                ctx.writeAndFlush(msg);
-//               System.out.println("!!!!!");
 //               ctx.pipeline().addLast(new MainHandler());
-//               System.out.println(isAuth);
            }
-            System.out.println(isAuth);
         }
     }
 

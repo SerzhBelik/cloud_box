@@ -7,7 +7,7 @@ import io.netty.util.ReferenceCountUtil;
 import ru.geekbrains.belikov.cloud.common.*;
 
 
-
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -16,6 +16,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class MainHandler extends ChannelInboundHandlerAdapter {
+    private String userName;
+    private final static String SERVER_STORAGE = "server_storage/";
+    private static String USER_DIRECTORY;
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -23,24 +30,30 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
             if (msg == null) {
                 return;
             }
-            if (msg != null){
-                System.out.println("not null");
+
+            if (msg instanceof Auth){
+                this.userName = ((Auth) msg).getLogin();
+                USER_DIRECTORY = SERVER_STORAGE + userName + "/";
+                if (!Files.exists(Paths.get(USER_DIRECTORY))){
+                    Files.createDirectories(Paths.get(USER_DIRECTORY));
+                }
             }
+
             if (msg instanceof CommandMessage){
                 CommandMessage cm = (CommandMessage) msg;
                 executeCommand(cm, ctx);
             }
             if (msg instanceof FileRequest) {
                 FileRequest fr = (FileRequest) msg;
-                if (Files.exists(Paths.get("server_storage/" + fr.getFilename()))) {
-                    FileMessage fm = new FileMessage(Paths.get("server_storage/" + fr.getFilename()));
+                if (Files.exists(Paths.get(USER_DIRECTORY + fr.getFilename()))) {
+                    FileMessage fm = new FileMessage(Paths.get(USER_DIRECTORY + fr.getFilename()));
                     ctx.writeAndFlush(fm);
                 }
             }
 
             if (msg instanceof FileMessage){
                 FileMessage fm = (FileMessage) msg;
-                Files.write(Paths.get("server_storage/" + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
+                Files.write(Paths.get(USER_DIRECTORY + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
 
             }
 
@@ -59,7 +72,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
         if (msg instanceof Delete) {
             Delete delete = (Delete) msg;
             try {
-                Files.delete(Paths.get("server_storage/" + delete.getFileName()));
+                Files.delete(Paths.get(USER_DIRECTORY + delete.getFileName()));
                 System.out.println(delete.getFileName());
                 ctx.writeAndFlush(new FileList(formFileList()));
             } catch (IOException e) {
@@ -77,7 +90,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
 
     private static List<String> formFileList(){
         try {
-            return Files.list(Paths.get("server_storage")).map(p -> p.getFileName().toString()).collect(Collectors.toList());
+            return Files.list(Paths.get(USER_DIRECTORY)).map(p -> p.getFileName().toString()).collect(Collectors.toList());
         } catch (IOException e) {
             e.printStackTrace();
         }
