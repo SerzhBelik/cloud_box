@@ -13,20 +13,26 @@ import ru.geekbrains.belikov.cloud.common.Auth;
 public class Server {
 
     private static class AuthHandler extends ChannelInboundHandlerAdapter{
-        private boolean auth = false;
+        private static boolean isAuth = false;
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-            if (auth){
+//            if (msg != null){
+//                System.out.println("not null");
+//            }
+
+            if (isAuth){
                 ctx.fireChannelRead(msg);
                 return;
             }
            if (msg instanceof Auth){
                ((Auth) msg).setAuth(true); //FIXME
-               auth = ((Auth) msg).isAuth();
+               isAuth = true;
                ctx.writeAndFlush(msg);
-               System.out.println("!!!!!");
-               ctx.pipeline().addLast(new MainHandler());
+//               System.out.println("!!!!!");
+//               ctx.pipeline().addLast(new MainHandler());
+//               System.out.println(isAuth);
            }
+            System.out.println(isAuth);
         }
     }
 
@@ -42,7 +48,8 @@ public class Server {
                             socketChannel.pipeline().addLast(
                                     new ObjectDecoder(50 * 1024 * 1024, ClassResolvers.cacheDisabled(null)),
                                     new ObjectEncoder(),
-                                    new AuthHandler()
+                                    new AuthHandler(),
+                                    new MainHandler()
                             );
                         }
                     })

@@ -23,6 +23,9 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
             if (msg == null) {
                 return;
             }
+            if (msg != null){
+                System.out.println("not null");
+            }
             if (msg instanceof CommandMessage){
                 CommandMessage cm = (CommandMessage) msg;
                 executeCommand(cm, ctx);
