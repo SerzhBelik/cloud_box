@@ -5,9 +5,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.ReferenceCountUtil;
 import ru.geekbrains.belikov.cloud.common.*;
-
-
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -63,7 +60,6 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
     }
 
     private void executeCommand(CommandMessage msg, ChannelHandlerContext ctx) {
-        System.out.println("Execute");
         if (msg instanceof Refresh) {
             ctx.writeAndFlush(new FileList(formFileList()));
             return;
