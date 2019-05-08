@@ -3,11 +3,13 @@ package ru.geekbrains.belikov.cloudbox.client;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MultipleSelectionModel;
+import javafx.scene.input.MouseEvent;
 import ru.geekbrains.belikov.cloud.common.*;
 
 import java.io.IOException;
@@ -16,8 +18,13 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ResourceBundle;
+import java.util.Stack;
 
 public class Controller implements Initializable {
+    private String currentItemSelected;
+    private static String ROOT = "client_storage/";
+    private Stack<String> localPathStack = new Stack<>();
+    private Stack<String> serverPathStack = new Stack<>();
 
     @FXML
     ListView<String> localFileList;
@@ -25,22 +32,31 @@ public class Controller implements Initializable {
     @FXML
     ListView<String> serverFileList;
 
-    @FXML
-    Button close_btn;
+//    @FXML
+//    Button close_btn;
+//
+//    @FXML
+//    Button del_serv_btn;
+//
+//    @FXML
+//    Button update_serv_btn;
+//
+//    @FXML
+//    Button update_clnt_btn;
 
     @FXML
-    Button del_serv_btn;
+    Button upLocal;
 
     @FXML
-    Button update_serv_btn;
-
-    @FXML
-    Button update_clnt_btn;
+    Button upServ;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         Network.start();
         Network.sendMsg(new Refresh());
+        setDoubleClick(localFileList);
+        setDoubleClick(serverFileList);
+
         Thread t = new Thread(() -> {
             try {
                 while (true) {
@@ -63,6 +79,33 @@ public class Controller implements Initializable {
         t.setDaemon(true);
         t.start();
         refreshLocalFilesList();
+    }
+
+    private void setDoubleClick(ListView<String> FileList) {
+        FileList.setOnMouseClicked(new EventHandler<MouseEvent>() {
+
+            @Override
+            public void handle(MouseEvent click) {
+
+                if (click.getClickCount() == 2) {
+                    //Use ListView's getSelected Item
+                    String currentItemSelected = FileList.getSelectionModel()
+                            .getSelectedItem();
+                    //use this to do whatever you want to. Open Link etc.
+                    System.out.println(currentItemSelected);
+                    openAndShow(ROOT + currentItemSelected);
+                }
+            }
+        });
+    }
+
+    private void openAndShow(String s) {
+        if (Files.isDirectory(Paths.get(s))){
+            localPathStack.push(ROOT);
+            ROOT = s + "/";
+            System.out.println("ROOT = " + ROOT);
+            refreshLocalFilesList();
+        }
     }
 
     private void selectMessage(AbstractMessage am) throws IOException{
@@ -95,15 +138,21 @@ public class Controller implements Initializable {
 
     private void saveMessage(AbstractMessage am) throws IOException{
         FileMessage fm = (FileMessage) am;
-        Files.write(Paths.get("client_storage/" + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
+        Files.write(Paths.get(ROOT + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
         refreshLocalFilesList();
+//        System.out.println(ROOT);
     }
 
     public void refreshLocalFilesList() {
         if (Platform.isFxApplicationThread()) {
             try {
                 localFileList.getItems().clear();
-                Files.list(Paths.get("client_storage")).map(p -> p.getFileName().toString()).forEach(o -> localFileList.getItems().add(o));
+                Files.list(Paths.get(ROOT)).map(p -> p.getFileName().toString()).forEach(o -> localFileList.getItems().add(o));
+
+//                for (String item: localFileList.getItems()
+//                     ) {
+//                    System.out.println(item);
+//                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -111,7 +160,7 @@ public class Controller implements Initializable {
             Platform.runLater(() -> {
                 try {
                     localFileList.getItems().clear();
-                    Files.list(Paths.get("client_storage")).map(p -> p.getFileName().toString()).forEach(o -> localFileList.getItems().add(o));
+                    Files.list(Paths.get(ROOT)).map(p -> p.getFileName().toString()).forEach(o -> localFileList.getItems().add(o));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -123,7 +172,7 @@ public class Controller implements Initializable {
         MultipleSelectionModel<String> msm= localFileList.getSelectionModel();
         ObservableList<String> selected = msm.getSelectedItems();
         for (String item : selected) {
-            Files.delete(Paths.get("client_storage/" + item));
+            Files.delete(Paths.get(ROOT + item));
         }
         refreshLocalFilesList();
     }
@@ -145,7 +194,8 @@ public class Controller implements Initializable {
         MultipleSelectionModel<String> msm= localFileList.getSelectionModel();
         ObservableList<String> selected = msm.getSelectedItems();
         for (String item : selected) {
-            Network.sendMsg(new FileMessage(Paths.get("client_storage/" + item)));
+            System.out.println(item);
+            Network.sendMsg(new FileMessage(Paths.get(ROOT + item)));
         }
         Network.sendMsg(new Refresh());
     }
@@ -168,6 +218,16 @@ public class Controller implements Initializable {
 
         refreshLocalFilesList();
         Network.sendMsg(new Refresh());
+
+    }
+
+    public void upLocal(){
+        if (localPathStack.empty()) return;
+        ROOT = localPathStack.pop();
+        refreshLocalFilesList();
+    }
+
+    public void upServ(){
 
     }
 }

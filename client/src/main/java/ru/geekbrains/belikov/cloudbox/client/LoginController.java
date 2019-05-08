@@ -69,7 +69,8 @@ public class LoginController{
 
     private boolean isAuth() {
         Network.start();
-        Network.sendMsg(new Auth(login.getText(), password.getText()));
+//        Network.sendMsg(new Auth(login.getText(), password.getText()));
+        Network.sendMsg(new Auth("user1", "pass1"));// FIXME
         Object om;
             try {
                 do  {

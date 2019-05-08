@@ -12,6 +12,7 @@ import ru.geekbrains.belikov.cloud.common.Auth;
 
 public class Server {
 
+
     private static class AuthHandler extends ChannelInboundHandlerAdapter{
         private static boolean isAuth = false;
         @Override
@@ -24,7 +25,6 @@ public class Server {
 
            if (msg instanceof Auth){
                Auth auth = (Auth) msg;
-
                auth.setAuth(AuthService.checkUser(auth.getLogin(), auth.getPassword()));
                isAuth = auth.isAuth();
                ctx.fireChannelRead(msg);
