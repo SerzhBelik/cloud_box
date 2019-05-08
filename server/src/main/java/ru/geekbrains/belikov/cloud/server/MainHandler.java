@@ -10,12 +10,14 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.Stack;
 import java.util.stream.Collectors;
 
 public class MainHandler extends ChannelInboundHandlerAdapter {
     private String userName;
     private final static String SERVER_STORAGE = "server_storage/";
-    private static String USER_DIRECTORY;
+    private static String CURRENT_DIRECTORY;
+    private static Stack<String> serverPathStack = new Stack<>();
 
     public void setUserName(String userName) {
         this.userName = userName;
@@ -30,9 +32,9 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
 
             if (msg instanceof Auth){
                 this.userName = ((Auth) msg).getLogin();
-                USER_DIRECTORY = SERVER_STORAGE + userName + "/";
-                if (!Files.exists(Paths.get(USER_DIRECTORY))){
-                    Files.createDirectories(Paths.get(USER_DIRECTORY));
+                CURRENT_DIRECTORY = SERVER_STORAGE + userName + "/";
+                if (!Files.exists(Paths.get(CURRENT_DIRECTORY))){
+                    Files.createDirectories(Paths.get(CURRENT_DIRECTORY));
                 }
             }
 
@@ -42,15 +44,15 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
             }
             if (msg instanceof FileRequest) {
                 FileRequest fr = (FileRequest) msg;
-                if (Files.exists(Paths.get(USER_DIRECTORY + fr.getFilename()))) {
-                    FileMessage fm = new FileMessage(Paths.get(USER_DIRECTORY + fr.getFilename()));
+                if (Files.exists(Paths.get(CURRENT_DIRECTORY + fr.getFilename()))) {
+                    FileMessage fm = new FileMessage(Paths.get(CURRENT_DIRECTORY + fr.getFilename()));
                     ctx.writeAndFlush(fm);
                 }
             }
 
             if (msg instanceof FileMessage){
                 FileMessage fm = (FileMessage) msg;
-                Files.write(Paths.get(USER_DIRECTORY + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
+                Files.write(Paths.get(CURRENT_DIRECTORY + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
 
             }
 
@@ -61,19 +63,33 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
 
     private void executeCommand(CommandMessage msg, ChannelHandlerContext ctx) {
         if (msg instanceof Refresh) {
-            ctx.writeAndFlush(new FileList(formFileList()));
+            System.out.println("Refresh " + CURRENT_DIRECTORY);
+            ctx.writeAndFlush(new FileList(formFileList(CURRENT_DIRECTORY)));
             return;
         }
 
         if (msg instanceof Delete) {
             Delete delete = (Delete) msg;
             try {
-                Files.delete(Paths.get(USER_DIRECTORY + delete.getFileName()));
+                Files.delete(Paths.get(CURRENT_DIRECTORY + delete.getFileName()));
                 System.out.println(delete.getFileName());
-                ctx.writeAndFlush(new FileList(formFileList()));
+                ctx.writeAndFlush(new FileList(formFileList(CURRENT_DIRECTORY)));
+                return;
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
+        }
+
+        if (msg instanceof VistCommand){
+//            System.out.println("visit");
+            VistCommand vistComand = (VistCommand) msg;
+//            System.out.println(vistComand.getDirectory());
+            serverPathStack.push(CURRENT_DIRECTORY);
+            CURRENT_DIRECTORY =  CURRENT_DIRECTORY + vistComand.getDirectory();
+//            System.out.println("CUR DIR  " + CURRENT_DIRECTORY);
+//            System.out.println(formFileList(CURRENT_DIRECTORY));
+            ctx.writeAndFlush(new FileList(formFileList(CURRENT_DIRECTORY )));
         }
 
     }
@@ -84,9 +100,9 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
         ctx.close();
     }
 
-    private static List<String> formFileList(){
+    private static List<String> formFileList(String currentDirectory){
         try {
-            return Files.list(Paths.get(USER_DIRECTORY)).map(p -> p.getFileName().toString()).collect(Collectors.toList());
+            return Files.list(Paths.get(currentDirectory)).map(p -> p.getFileName().toString()).collect(Collectors.toList());
         } catch (IOException e) {
             e.printStackTrace();
         }
