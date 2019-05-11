@@ -18,10 +18,7 @@ public class Server {
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 
-            if (isAuth){
-                ctx.fireChannelRead(msg);
-                return;
-            }
+
 
            if (msg instanceof Auth){
                Auth auth = (Auth) msg;
@@ -31,6 +28,11 @@ public class Server {
                ctx.writeAndFlush(msg);
 //               ctx.pipeline().addLast(new MainHandler());
            }
+
+            if (isAuth){
+                ctx.fireChannelRead(msg);
+                return;
+            }
         }
     }
 

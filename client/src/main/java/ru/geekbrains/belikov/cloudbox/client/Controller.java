@@ -12,6 +12,7 @@ import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.input.MouseEvent;
 import ru.geekbrains.belikov.cloud.common.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -92,11 +93,8 @@ public class Controller implements Initializable {
             public void handle(MouseEvent click) {
 
                 if (click.getClickCount() == 2) {
-                    //Use ListView's getSelected Item
                     currentItemSelected = fileViewList.getSelectionModel()
                             .getSelectedItem();
-                    //use this to do whatever you want to. Open Link etc.
-//                    System.out.println(currentItemSelected);
                     openAndShow(fileViewList, currentItemSelected);
                 }
             }
@@ -104,25 +102,19 @@ public class Controller implements Initializable {
     }
 
     private void openAndShow(ListView<String> fileViewList, String s) {
-        System.out.println(serverFilesMap.keySet());
-        System.out.println(serverFilesMap.get(s));
+
         if (Files.isDirectory(Paths.get(CURRENT_DIRECTORY + s))
                 && fileViewList == localFileList){
-//            System.out.println(s);
-//            if (fileList == localFileList) {
                 localPathStack.push(CURRENT_DIRECTORY);
                 CURRENT_DIRECTORY = CURRENT_DIRECTORY + s + "/";
                 System.out.println("ROOT = " + CURRENT_DIRECTORY);
                 refreshLocalFilesList();
+                return;
             }
 
             if (fileViewList == serverFileList && serverFilesMap.get(s)){
                 CURRENT_SERVER_DIRECTORY = CURRENT_SERVER_DIRECTORY + s + "/";
                 Network.sendMsg(new VistCommand(CURRENT_SERVER_DIRECTORY));
-//                Network.sendMsg(new VisitCommand(serverPathStack.peek() + s + "/"));
-//                serverPathStack.push(s + "/");
-                System.out.println("///////////////////////////////");
-                System.out.println(CURRENT_SERVER_DIRECTORY);
             }
         }
 
@@ -141,8 +133,6 @@ public class Controller implements Initializable {
     private void refreshServerFilesList(FileMap fileMap) {
         serverFilesMap = fileMap.getFileMap();
         fileList = new ArrayList<String>(fileMap.getFileMap().keySet());
-        System.out.println("file list " +fileList.toString());
-        System.out.println(fileList);
         if (Platform.isFxApplicationThread()) {
                 serverFileList.getItems().clear();
                 fileList.forEach(o -> serverFileList.getItems().add(o));
@@ -162,7 +152,6 @@ public class Controller implements Initializable {
         FileMessage fm = (FileMessage) am;
         Files.write(Paths.get(CURRENT_DIRECTORY + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
         refreshLocalFilesList();
-//        System.out.println(ROOT);
     }
 
     public void refreshLocalFilesList() {
@@ -171,10 +160,6 @@ public class Controller implements Initializable {
                 localFileList.getItems().clear();
                 Files.list(Paths.get(CURRENT_DIRECTORY)).map(p -> p.getFileName().toString()).forEach(o -> localFileList.getItems().add(o));
 
-//                for (String item: localFileList.getItems()
-//                     ) {
-//                    System.out.println(item);
-//                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -194,9 +179,31 @@ public class Controller implements Initializable {
         MultipleSelectionModel<String> msm= localFileList.getSelectionModel();
         ObservableList<String> selected = msm.getSelectedItems();
         for (String item : selected) {
-            Files.delete(Paths.get(CURRENT_DIRECTORY + item));
+            delete(CURRENT_DIRECTORY + item + "/");
+//            Files.delete(Paths.get(CURRENT_DIRECTORY + item));
         }
         refreshLocalFilesList();
+    }
+
+    private void delete(String item) throws IOException {
+        if (Files.isDirectory(Paths.get(item))){
+            File dir = new File(item);
+            File[] files = dir.listFiles();
+            if (files.length == 0) {
+                dir.delete();
+                return;
+            }
+            System.out.println();
+            for (File f: files
+                 ) {
+                System.out.println(item + f.getName());
+                delete(item + f.getName()+ "/");
+            }
+        } else {
+            Files.delete(Paths.get(item));
+            return;
+        }
+        delete(item);
     }
 
 
@@ -204,7 +211,6 @@ public class Controller implements Initializable {
         MultipleSelectionModel<String> msm= serverFileList.getSelectionModel();
         ObservableList<String> selected = msm.getSelectedItems();
         for (String item : selected) {
-            System.out.println(item);
             Network.sendMsg(new Delete(Paths.get(item)));
         }
         Network.sendMsg(new Refresh());
@@ -216,7 +222,6 @@ public class Controller implements Initializable {
         MultipleSelectionModel<String> msm= localFileList.getSelectionModel();
         ObservableList<String> selected = msm.getSelectedItems();
         for (String item : selected) {
-            System.out.println(item);
             Network.sendMsg(new FileMessage(Paths.get(CURRENT_DIRECTORY + item)));
         }
         Network.sendMsg(new Refresh());
@@ -250,7 +255,6 @@ public class Controller implements Initializable {
     }
 
     public void upServ(){
-//        System.out.println(serverPathStack.peek());
         refresh = new Refresh();
         refresh.setUp(true);
         Network.sendMsg(refresh);

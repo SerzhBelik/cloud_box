@@ -23,10 +23,6 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
     private static Stack<String> serverPathStack = new Stack<>();
     private static Map<String, Boolean> fileMap;
 
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         try {
@@ -81,7 +77,6 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
             Delete delete = (Delete) msg;
             try {
                 Files.delete(Paths.get(CURRENT_DIRECTORY + delete.getFileName()));
-                System.out.println(delete.getFileName());
                 ctx.writeAndFlush(new FileMap(formFileMap(CURRENT_DIRECTORY)));
                 return;
             } catch (IOException e) {
@@ -92,11 +87,9 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
 
         if (msg instanceof VistCommand){
             VistCommand vistCommand = (VistCommand) msg;
-//            System.out.println(visitCommand.getDirectory());
             serverPathStack.push(CURRENT_DIRECTORY);
             CURRENT_DIRECTORY =  USER_ROOT + vistCommand.getDirectory();
             System.out.println("CUR DIR  " + CURRENT_DIRECTORY);
-//            System.out.println(formFileList(CURRENT_DIRECTORY));
             ctx.writeAndFlush(new FileMap(formFileMap(CURRENT_DIRECTORY )));
         }
 
