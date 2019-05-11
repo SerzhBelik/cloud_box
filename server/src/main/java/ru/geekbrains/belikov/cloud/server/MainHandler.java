@@ -76,12 +76,18 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
         if (msg instanceof Delete) {
             Delete delete = (Delete) msg;
             try {
-                Files.delete(Paths.get(CURRENT_DIRECTORY + delete.getFileName()));
+                FileController.delete(CURRENT_DIRECTORY + delete.getFileName() + "/");
                 ctx.writeAndFlush(new FileMap(formFileMap(CURRENT_DIRECTORY)));
-                return;
             } catch (IOException e) {
                 e.printStackTrace();
             }
+//            try {
+//                Files.delete(Paths.get(CURRENT_DIRECTORY + delete.getFileName()));
+//                ctx.writeAndFlush(new FileMap(formFileMap(CURRENT_DIRECTORY)));
+//                return;
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
 
         }
 

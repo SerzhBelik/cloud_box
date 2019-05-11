@@ -179,32 +179,32 @@ public class Controller implements Initializable {
         MultipleSelectionModel<String> msm= localFileList.getSelectionModel();
         ObservableList<String> selected = msm.getSelectedItems();
         for (String item : selected) {
-            delete(CURRENT_DIRECTORY + item + "/");
-//            Files.delete(Paths.get(CURRENT_DIRECTORY + item));
+            FileController.delete(CURRENT_DIRECTORY + item + "/");
+//            delete(CURRENT_DIRECTORY + item + "/");
         }
         refreshLocalFilesList();
     }
 
-    private void delete(String item) throws IOException {
-        if (Files.isDirectory(Paths.get(item))){
-            File dir = new File(item);
-            File[] files = dir.listFiles();
-            if (files.length == 0) {
-                dir.delete();
-                return;
-            }
-            System.out.println();
-            for (File f: files
-                 ) {
-                System.out.println(item + f.getName());
-                delete(item + f.getName()+ "/");
-            }
-        } else {
-            Files.delete(Paths.get(item));
-            return;
-        }
-        delete(item);
-    }
+//    private void delete(String item) throws IOException {
+//        if (Files.isDirectory(Paths.get(item))){
+//            File dir = new File(item);
+//            File[] files = dir.listFiles();
+//            if (files.length == 0) {
+//                dir.delete();
+//                return;
+//            }
+//            System.out.println();
+//            for (File f: files
+//                 ) {
+//                System.out.println(item + f.getName());
+//                delete(item + f.getName()+ "/");
+//            }
+//        } else {
+//            Files.delete(Paths.get(item));
+//            return;
+//        }
+//        delete(item);
+//    }
 
 
     public void btnServDelete(ActionEvent actionEvent) {
