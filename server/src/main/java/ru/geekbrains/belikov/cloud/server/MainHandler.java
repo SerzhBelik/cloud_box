@@ -9,15 +9,19 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
 public class MainHandler extends ChannelInboundHandlerAdapter {
     private String userName;
     private final static String SERVER_STORAGE = "server_storage/";
+    private static String USER_ROOT;
     private static String CURRENT_DIRECTORY;
     private static Stack<String> serverPathStack = new Stack<>();
+    private static Map<String, Boolean> fileMap;
 
     public void setUserName(String userName) {
         this.userName = userName;
@@ -32,7 +36,8 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
 
             if (msg instanceof Auth){
                 this.userName = ((Auth) msg).getLogin();
-                CURRENT_DIRECTORY = SERVER_STORAGE + userName + "/";
+                USER_ROOT = SERVER_STORAGE + userName + "/";
+                CURRENT_DIRECTORY = USER_ROOT;
                 if (!Files.exists(Paths.get(CURRENT_DIRECTORY))){
                     Files.createDirectories(Paths.get(CURRENT_DIRECTORY));
                 }
@@ -63,8 +68,12 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
 
     private void executeCommand(CommandMessage msg, ChannelHandlerContext ctx) {
         if (msg instanceof Refresh) {
+            if (((Refresh) msg).getUp() && !serverPathStack.empty()){
+                CURRENT_DIRECTORY = serverPathStack.pop();
+            }
+
             System.out.println("Refresh " + CURRENT_DIRECTORY);
-            ctx.writeAndFlush(new FileList(formFileList(CURRENT_DIRECTORY)));
+            ctx.writeAndFlush(new FileMap(formFileMap(CURRENT_DIRECTORY)));
             return;
         }
 
@@ -73,7 +82,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
             try {
                 Files.delete(Paths.get(CURRENT_DIRECTORY + delete.getFileName()));
                 System.out.println(delete.getFileName());
-                ctx.writeAndFlush(new FileList(formFileList(CURRENT_DIRECTORY)));
+                ctx.writeAndFlush(new FileMap(formFileMap(CURRENT_DIRECTORY)));
                 return;
             } catch (IOException e) {
                 e.printStackTrace();
@@ -82,14 +91,13 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
         }
 
         if (msg instanceof VistCommand){
-//            System.out.println("visit");
-            VistCommand vistComand = (VistCommand) msg;
-//            System.out.println(vistComand.getDirectory());
+            VistCommand vistCommand = (VistCommand) msg;
+//            System.out.println(visitCommand.getDirectory());
             serverPathStack.push(CURRENT_DIRECTORY);
-            CURRENT_DIRECTORY =  CURRENT_DIRECTORY + vistComand.getDirectory();
-//            System.out.println("CUR DIR  " + CURRENT_DIRECTORY);
+            CURRENT_DIRECTORY =  USER_ROOT + vistCommand.getDirectory();
+            System.out.println("CUR DIR  " + CURRENT_DIRECTORY);
 //            System.out.println(formFileList(CURRENT_DIRECTORY));
-            ctx.writeAndFlush(new FileList(formFileList(CURRENT_DIRECTORY )));
+            ctx.writeAndFlush(new FileMap(formFileMap(CURRENT_DIRECTORY )));
         }
 
     }
@@ -100,9 +108,15 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
         ctx.close();
     }
 
-    private static List<String> formFileList(String currentDirectory){
+    private static Map<String, Boolean> formFileMap(String currentDirectory){
+        fileMap = new HashMap<>();
         try {
-            return Files.list(Paths.get(currentDirectory)).map(p -> p.getFileName().toString()).collect(Collectors.toList());
+            List<String> list = Files.list(Paths.get(currentDirectory)).map(p -> p.getFileName().toString()).collect(Collectors.toList());
+            for (String s: list
+                 ) {
+                fileMap.put(s, Files.isDirectory(Paths.get(CURRENT_DIRECTORY + s)));
+            }
+            return fileMap;
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -17,14 +17,17 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ResourceBundle;
-import java.util.Stack;
+import java.util.*;
 
 public class Controller implements Initializable {
     private String currentItemSelected;
     private static String CURRENT_DIRECTORY = "client_storage/";
+    private static String CURRENT_SERVER_DIRECTORY = "";
     private Stack<String> localPathStack = new Stack<>();
     private Stack<String> serverPathStack = new Stack<>();
+    private Refresh refresh;
+    private List<String> fileList;
+    private Map<String, Boolean> serverFilesMap;
 
     @FXML
     ListView<String> localFileList;
@@ -82,62 +85,71 @@ public class Controller implements Initializable {
         refreshLocalFilesList();
     }
 
-    private void setDoubleClick(ListView<String> fileList) {
-        fileList.setOnMouseClicked(new EventHandler<MouseEvent>() {
+    private void setDoubleClick(ListView<String> fileViewList) {
+        fileViewList.setOnMouseClicked(new EventHandler<MouseEvent>() {
 
             @Override
             public void handle(MouseEvent click) {
 
                 if (click.getClickCount() == 2) {
                     //Use ListView's getSelected Item
-                    currentItemSelected = fileList.getSelectionModel()
+                    currentItemSelected = fileViewList.getSelectionModel()
                             .getSelectedItem();
                     //use this to do whatever you want to. Open Link etc.
-                    System.out.println(currentItemSelected);
-                    openAndShow(fileList, currentItemSelected);
+//                    System.out.println(currentItemSelected);
+                    openAndShow(fileViewList, currentItemSelected);
                 }
             }
         });
     }
 
-    private void openAndShow(ListView<String> fileList, String s) {
-        if (Files.isDirectory(Paths.get(CURRENT_DIRECTORY + s))){
-
-            if (fileList == localFileList) {
+    private void openAndShow(ListView<String> fileViewList, String s) {
+        System.out.println(serverFilesMap.keySet());
+        System.out.println(serverFilesMap.get(s));
+        if (Files.isDirectory(Paths.get(CURRENT_DIRECTORY + s))
+                && fileViewList == localFileList){
+//            System.out.println(s);
+//            if (fileList == localFileList) {
                 localPathStack.push(CURRENT_DIRECTORY);
                 CURRENT_DIRECTORY = CURRENT_DIRECTORY + s + "/";
                 System.out.println("ROOT = " + CURRENT_DIRECTORY);
                 refreshLocalFilesList();
             }
 
-            if (fileList == serverFileList){
-                serverPathStack.push(s + "/");
-                Network.sendMsg(new VistCommand(s + "/"));
-                System.out.println(s);
+            if (fileViewList == serverFileList && serverFilesMap.get(s)){
+                CURRENT_SERVER_DIRECTORY = CURRENT_SERVER_DIRECTORY + s + "/";
+                Network.sendMsg(new VistCommand(CURRENT_SERVER_DIRECTORY));
+//                Network.sendMsg(new VisitCommand(serverPathStack.peek() + s + "/"));
+//                serverPathStack.push(s + "/");
+                System.out.println("///////////////////////////////");
+                System.out.println(CURRENT_SERVER_DIRECTORY);
             }
         }
-    }
+
 
     private void selectMessage(AbstractMessage am) throws IOException{
         if (am instanceof FileMessage) {
             saveMessage(am);
         }
 
-        if (am instanceof FileList){
-            FileList fileList = (FileList) am;
-            refreshServerFilesList(fileList);
+        if (am instanceof FileMap){
+            FileMap fileMap = (FileMap) am;
+            refreshServerFilesList(fileMap);
         }
     }
 
-    private void refreshServerFilesList(FileList fileList) {
-        System.out.println(fileList.getFileList());
+    private void refreshServerFilesList(FileMap fileMap) {
+        serverFilesMap = fileMap.getFileMap();
+        fileList = new ArrayList<String>(fileMap.getFileMap().keySet());
+        System.out.println("file list " +fileList.toString());
+        System.out.println(fileList);
         if (Platform.isFxApplicationThread()) {
                 serverFileList.getItems().clear();
-                fileList.getFileList().forEach(o -> serverFileList.getItems().add(o));
+                fileList.forEach(o -> serverFileList.getItems().add(o));
         } else {
             Platform.runLater(() -> {
                     serverFileList.getItems().clear();
-                    fileList.getFileList().forEach(o -> serverFileList.getItems().add(o));
+                    fileList.forEach(o -> serverFileList.getItems().add(o));
             });
         }
     }
@@ -238,6 +250,9 @@ public class Controller implements Initializable {
     }
 
     public void upServ(){
-        System.out.println(serverPathStack.peek());
+//        System.out.println(serverPathStack.peek());
+        refresh = new Refresh();
+        refresh.setUp(true);
+        Network.sendMsg(refresh);
     }
 }
