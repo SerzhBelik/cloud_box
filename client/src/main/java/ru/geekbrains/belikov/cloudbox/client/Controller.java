@@ -150,8 +150,15 @@ public class Controller implements Initializable {
 
     private void saveMessage(AbstractMessage am) throws IOException{
         FileMessage fm = (FileMessage) am;
-        Files.write(Paths.get(CURRENT_DIRECTORY + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
-        refreshLocalFilesList();
+
+        if (fm.isDirectory()) {
+            Files.createDirectories(Paths.get(CURRENT_DIRECTORY + fm.getFilename()));
+
+        } else {
+            Files.write(Paths.get(CURRENT_DIRECTORY + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
+
+        }
+
     }
 
     public void refreshLocalFilesList() {

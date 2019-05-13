@@ -5,6 +5,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.ReferenceCountUtil;
 import ru.geekbrains.belikov.cloud.common.*;
+
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -45,10 +47,12 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
             }
             if (msg instanceof FileRequest) {
                 FileRequest fr = (FileRequest) msg;
-                if (Files.exists(Paths.get(CURRENT_DIRECTORY + fr.getFilename()))) {
-                    FileMessage fm = new FileMessage(Paths.get(CURRENT_DIRECTORY + fr.getFilename()));
-                    ctx.writeAndFlush(fm);
+                if (!Files.exists(Paths.get(CURRENT_DIRECTORY + fr.getFilename()))){
+                    System.out.println("File not exists!");
+                    return;
                 }
+
+                send(fr.getFilename() + "/", ctx);
             }
 
             if (msg instanceof FileMessage) {
@@ -67,6 +71,27 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
             ReferenceCountUtil.release(msg);
         }
     }
+
+    private void send(String filename, ChannelHandlerContext ctx) {
+        if (Files.isDirectory(Paths.get(CURRENT_DIRECTORY + filename))){
+            FileMessage fm = new FileMessage(filename, CURRENT_DIRECTORY, true);
+            ctx.writeAndFlush(fm);
+            File dir = new File(CURRENT_DIRECTORY + filename);
+            File[] files = dir.listFiles();
+            if (files == null || files.length == 0) {
+                return;
+            }
+
+            for (File f: files
+            ) {
+                send(filename + f.getName() + "/", ctx);
+            }
+        } else {
+            ctx.writeAndFlush(new FileMessage(filename, CURRENT_DIRECTORY, false));
+            return;
+        }
+    }
+
 
     private void executeCommand(CommandMessage msg, ChannelHandlerContext ctx) {
         if (msg instanceof Refresh) {
