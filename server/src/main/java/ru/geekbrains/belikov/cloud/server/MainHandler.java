@@ -5,6 +5,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.ReferenceCountUtil;
 import ru.geekbrains.belikov.cloud.common.*;
+
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -51,10 +53,29 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                 }
             }
 
-            if (msg instanceof FileMessage){
+            if (msg instanceof FileMessage) {
                 FileMessage fm = (FileMessage) msg;
-                Files.write(Paths.get(CURRENT_DIRECTORY + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
+//                fm.setFilename(fm.getFilename().substring(fm.getFilename().indexOf("/") + 1, fm.getFilename().length()));
+                System.out.println("fm = " + fm.getFilename());
+                if (fm.isDirectory()) {
+                    serverPathStack.push(CURRENT_DIRECTORY);
+//                    CURRENT_DIRECTORY = CURRENT_DIRECTORY + fm.getFilename();
+                    Files.createDirectories(Paths.get(CURRENT_DIRECTORY + fm.getFilename()));
+                    System.out.println("Create dir!!!!" + CURRENT_DIRECTORY + fm.getFilename());
+//                    CURRENT_DIRECTORY = CURRENT_DIRECTORY + fm.getFilename();
+//                    serverPathStack.push(CURRENT_DIRECTORY);
 
+                } else {
+//                    serverPathStack.push(CURRENT_DIRECTORY);
+//                    CURRENT_DIRECTORY = CURRENT_DIRECTORY + fm.getFilename() + "/";
+//                    System.out.println("Current dir = " + CURRENT_DIRECTORY);
+                    System.out.println("fm not dir = " + fm.getFilename());
+                    System.out.println("Current dir = " + CURRENT_DIRECTORY);
+                    System.out.println("file write " + CURRENT_DIRECTORY + fm.getFilename());
+                    Files.write(Paths.get(CURRENT_DIRECTORY + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
+
+                }
+//                Files.write(Paths.get(CURRENT_DIRECTORY + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
             }
 
         } finally {
@@ -64,9 +85,9 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
 
     private void executeCommand(CommandMessage msg, ChannelHandlerContext ctx) {
         if (msg instanceof Refresh) {
-            if (((Refresh) msg).getUp() && !serverPathStack.empty()){
-                CURRENT_DIRECTORY = serverPathStack.pop();
-            }
+//            if (((Refresh) msg).getUp() && !serverPathStack.empty()){
+//                CURRENT_DIRECTORY = serverPathStack.pop();
+//            }
 
             System.out.println("Refresh " + CURRENT_DIRECTORY);
             ctx.writeAndFlush(new FileMap(formFileMap(CURRENT_DIRECTORY)));
@@ -81,13 +102,6 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-//            try {
-//                Files.delete(Paths.get(CURRENT_DIRECTORY + delete.getFileName()));
-//                ctx.writeAndFlush(new FileMap(formFileMap(CURRENT_DIRECTORY)));
-//                return;
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
 
         }
 
@@ -97,6 +111,13 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
             CURRENT_DIRECTORY =  USER_ROOT + vistCommand.getDirectory();
             System.out.println("CUR DIR  " + CURRENT_DIRECTORY);
             ctx.writeAndFlush(new FileMap(formFileMap(CURRENT_DIRECTORY )));
+        }
+
+        if (msg instanceof Up){
+            if (!serverPathStack.empty()){
+                CURRENT_DIRECTORY = serverPathStack.pop();
+            }
+
         }
 
     }

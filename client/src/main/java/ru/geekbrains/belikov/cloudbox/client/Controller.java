@@ -185,26 +185,6 @@ public class Controller implements Initializable {
         refreshLocalFilesList();
     }
 
-//    private void delete(String item) throws IOException {
-//        if (Files.isDirectory(Paths.get(item))){
-//            File dir = new File(item);
-//            File[] files = dir.listFiles();
-//            if (files.length == 0) {
-//                dir.delete();
-//                return;
-//            }
-//            System.out.println();
-//            for (File f: files
-//                 ) {
-//                System.out.println(item + f.getName());
-//                delete(item + f.getName()+ "/");
-//            }
-//        } else {
-//            Files.delete(Paths.get(item));
-//            return;
-//        }
-//        delete(item);
-//    }
 
 
     public void btnServDelete(ActionEvent actionEvent) {
@@ -222,10 +202,38 @@ public class Controller implements Initializable {
         MultipleSelectionModel<String> msm= localFileList.getSelectionModel();
         ObservableList<String> selected = msm.getSelectedItems();
         for (String item : selected) {
-            Network.sendMsg(new FileMessage(Paths.get(CURRENT_DIRECTORY + item)));
+//            FileController.send(CURRENT_DIRECTORY + item + "/");
+            send(item + "/");
+//            Network.sendMsg(new FileMessage(Paths.get(CURRENT_DIRECTORY + item)));
         }
         Network.sendMsg(new Refresh());
     }
+
+    private void send(String item) {
+        System.out.println(item);
+
+        if (Files.isDirectory(Paths.get(CURRENT_DIRECTORY + item))){
+            System.out.println("to send " + item );
+            Network.sendMsg(new FileMessage(item, CURRENT_DIRECTORY, true));
+            File dir = new File(CURRENT_DIRECTORY + item);
+            File[] files = dir.listFiles();
+            if (files == null || files.length == 0) {
+                return;
+            }
+
+            for (File f: files
+                 ) {
+//                System.out.println(item + f.getName());
+                System.out.println("to send " + item + f.getName() + "/");
+                send(item + f.getName() + "/");
+            }
+//            Network.sendMsg(new Up());
+        } else {
+            System.out.println("item = " + item);
+            Network.sendMsg(new FileMessage(item, CURRENT_DIRECTORY, false));
+            return;
+        }
+        }
 
 
     public void btnExit(ActionEvent actionEvent) {
@@ -255,8 +263,9 @@ public class Controller implements Initializable {
     }
 
     public void upServ(){
-        refresh = new Refresh();
-        refresh.setUp(true);
-        Network.sendMsg(refresh);
+//        refresh = new Refresh();
+//        refresh.setUp(true);
+        Network.sendMsg(new Up());
+        Network.sendMsg(new Refresh());
     }
 }
