@@ -107,12 +107,12 @@ public class Controller implements Initializable {
                 && fileViewList == localFileList){
                 localPathStack.push(CURRENT_DIRECTORY);
                 CURRENT_DIRECTORY = CURRENT_DIRECTORY + s + "/";
-                System.out.println("ROOT = " + CURRENT_DIRECTORY);
                 refreshLocalFilesList();
                 return;
             }
 
             if (fileViewList == serverFileList && serverFilesMap.get(s)){
+                serverPathStack.push(CURRENT_SERVER_DIRECTORY);
                 CURRENT_SERVER_DIRECTORY = CURRENT_SERVER_DIRECTORY + s + "/";
                 Network.sendMsg(new VistCommand(CURRENT_SERVER_DIRECTORY));
             }
@@ -180,7 +180,6 @@ public class Controller implements Initializable {
         ObservableList<String> selected = msm.getSelectedItems();
         for (String item : selected) {
             FileController.delete(CURRENT_DIRECTORY + item + "/");
-//            delete(CURRENT_DIRECTORY + item + "/");
         }
         refreshLocalFilesList();
     }
@@ -202,18 +201,14 @@ public class Controller implements Initializable {
         MultipleSelectionModel<String> msm= localFileList.getSelectionModel();
         ObservableList<String> selected = msm.getSelectedItems();
         for (String item : selected) {
-//            FileController.send(CURRENT_DIRECTORY + item + "/");
             send(item + "/");
-//            Network.sendMsg(new FileMessage(Paths.get(CURRENT_DIRECTORY + item)));
         }
         Network.sendMsg(new Refresh());
     }
 
     private void send(String item) {
-        System.out.println(item);
 
         if (Files.isDirectory(Paths.get(CURRENT_DIRECTORY + item))){
-            System.out.println("to send " + item );
             Network.sendMsg(new FileMessage(item, CURRENT_DIRECTORY, true));
             File dir = new File(CURRENT_DIRECTORY + item);
             File[] files = dir.listFiles();
@@ -223,13 +218,9 @@ public class Controller implements Initializable {
 
             for (File f: files
                  ) {
-//                System.out.println(item + f.getName());
-                System.out.println("to send " + item + f.getName() + "/");
                 send(item + f.getName() + "/");
             }
-//            Network.sendMsg(new Up());
         } else {
-            System.out.println("item = " + item);
             Network.sendMsg(new FileMessage(item, CURRENT_DIRECTORY, false));
             return;
         }
@@ -263,9 +254,8 @@ public class Controller implements Initializable {
     }
 
     public void upServ(){
-//        refresh = new Refresh();
-//        refresh.setUp(true);
         Network.sendMsg(new Up());
         Network.sendMsg(new Refresh());
+        CURRENT_SERVER_DIRECTORY = serverPathStack.pop();
     }
 }

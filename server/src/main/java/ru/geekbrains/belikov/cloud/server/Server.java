@@ -26,7 +26,6 @@ public class Server {
                isAuth = auth.isAuth();
                ctx.fireChannelRead(msg);
                ctx.writeAndFlush(msg);
-//               ctx.pipeline().addLast(new MainHandler());
            }
 
             if (isAuth){
